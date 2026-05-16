@@ -51,4 +51,4 @@ Caso queira baixar e rodar o projeto na sua máquina, siga os passos abaixo.
    ```
 
 ---
-*Desenvolvido por [Bia Bruna](https://github.com/biabruna19)*.
+*Desenvolvido por [Beatriz Oliveira](https://github.com/biabruna19)*.
