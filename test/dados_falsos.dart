@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_meteorologico/models/cidade.dart';
@@ -78,11 +79,15 @@ class ClienteFalso {
 }
 
 class LocalizadorFalso implements Localizador {
-  LocalizadorFalso({this.erro});
+  LocalizadorFalso({this.erro, this.travar = false});
   final Exception? erro;
+
+  /// Simula o navegador que nunca responde.
+  final bool travar;
 
   @override
   Future<({double latitude, double longitude})> posicao() async {
+    if (travar) return Completer<({double latitude, double longitude})>().future;
     if (erro != null) throw erro!;
     return (latitude: -22.9, longitude: -47.06);
   }

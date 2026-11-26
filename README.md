@@ -1,7 +1,7 @@
 <h1 align="center">Clima Brasil</h1>
 
 <h3 align="center">
-  <a href="https://biabruna19.github.io/App-Meteorologico/">Abrir o app → biabruna19.github.io/App-Meteorologico</a>
+  <a href="https://biabruna19.github.io/App-Metereologico/">Abrir o app → biabruna19.github.io/App-Metereologico</a>
 </h3>
 
 <p align="center">
@@ -46,8 +46,8 @@ Na primeira versão o histórico de buscas ia para o Supabase, mas ele nunca apa
 Precisa do [Flutter](https://docs.flutter.dev/get-started/install) 3.47 ou mais novo.
 
 ```bash
-git clone https://github.com/biabruna19/App-Meteorologico.git
-cd App-Meteorologico
+git clone https://github.com/biabruna19/App-Metereologico.git
+cd App-Metereologico
 flutter pub get
 flutter run -d chrome
 ```

@@ -1,5 +1,6 @@
 import 'package:app_meteorologico/providers/clima_provider.dart';
 import 'package:app_meteorologico/services/clima_api.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -118,5 +119,19 @@ void main() {
     await p.usarLocalizacao();
     expect(p.erro, 'Sem permissão para usar sua localização.');
     expect(p.carregando, isFalse);
+  });
+
+  test('localização que nunca responde não fica carregando para sempre', () {
+    fakeAsync((tempo) {
+      final p = novo(loc: LocalizadorFalso(travar: true));
+      p.usarLocalizacao();
+      tempo.flushMicrotasks();
+      expect(p.carregando, isTrue);
+      expect(p.localizando, isTrue);
+      tempo.elapse(const Duration(seconds: 31));
+      expect(p.carregando, isFalse);
+      expect(p.localizando, isFalse);
+      expect(p.erro, contains('Não conseguimos descobrir sua localização'));
+    });
   });
 }

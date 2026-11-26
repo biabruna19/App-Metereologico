@@ -132,10 +132,19 @@ class _BarraBuscaState extends State<BarraBusca> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(18),
                   onTap: prov.carregando ? null : prov.usarLocalizacao,
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 54,
                     height: 54,
-                    child: Icon(Icons.my_location_rounded, color: Colors.white, semanticLabel: 'Usar minha localização'),
+                    child: prov.localizando
+                        ? const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                              semanticsLabel: 'Procurando sua localização',
+                            ),
+                          )
+                        : const Icon(Icons.my_location_rounded, color: Colors.white, semanticLabel: 'Usar minha localização'),
                   ),
                 ),
               ),
