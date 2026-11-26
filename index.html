@@ -1,46 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
+  <!-- Trocado pelo valor de --base-href no build (ex.: /App-Meteorologico/) -->
   <base href="/App-Metereologico/">
 
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Clima Brasil: previsão do tempo com temperatura, chuva, vento, índice UV e os próximos 7 dias de qualquer cidade.">
+  <meta name="author" content="Beatriz Oliveira">
+  <meta name="theme-color" content="#1E6FD0">
 
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="app_metereologico">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Clima Brasil">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>app_metereologico</title>
+  <title>Clima Brasil · previsão do tempo</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body { margin: 0; height: 100%; background: linear-gradient(#2F74B5, #7FA9CD); }
+    /* Aparece enquanto o Flutter carrega (alguns segundos na primeira visita) */
+    #carregando { position: fixed; inset: 0; display: grid; place-items: center; font-family: system-ui, sans-serif; color: #fff; text-align: center; }
+    #carregando .sol { width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: #FFD54F; box-shadow: 0 0 0 10px rgba(255, 213, 79, .25); animation: pulso 1.6s ease-in-out infinite; }
+    #carregando p { margin: 0; font-size: 17px; opacity: .9; }
+    @keyframes pulso { 50% { box-shadow: 0 0 0 22px rgba(255, 213, 79, 0); transform: scale(.94); } }
+    @media (prefers-reduced-motion: reduce) { #carregando .sol { animation: none; } }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <div id="carregando" role="status">
+    <div>
+      <div class="sol"></div>
+      <p>Carregando a previsão…</p>
+    </div>
+  </div>
+  <noscript><p style="color:#fff;font-family:sans-serif;text-align:center">Ative o JavaScript para ver a previsão do tempo.</p></noscript>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
