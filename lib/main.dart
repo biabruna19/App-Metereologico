@@ -1,46 +1,40 @@
-import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
-import 'providers/weather_provider.dart';
+import 'providers/clima_provider.dart';
 import 'screens/home_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializa o Supabase com as chaves obtidas via dashboard
-  await Supabase.initialize(
-    url: 'https://rqkhxisvqbkcbyvntquo.supabase.co',
-    anonKey: 'sb_publishable_WKfnAvpnTjBddnWjdULQ5Q_FPz4TIzz',
-  );
-
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => WeatherProvider()),
-      ],
-      child: const AppClimaBrasil(),
-    ),
-  );
+void main() {
+  runApp(ChangeNotifierProvider(create: (_) => ClimaProvider(), child: const ClimaBrasilApp()));
 }
 
-class AppClimaBrasil extends StatelessWidget {
-  const AppClimaBrasil({super.key});
+class ClimaBrasilApp extends StatelessWidget {
+  const ClimaBrasilApp({super.key, this.home = const HomeScreen()});
+
+  final Widget home;
+
+  static ThemeData get tema {
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: 'Outfit',
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4FA3E0), brightness: Brightness.dark),
+    );
+    return base.copyWith(
+      textTheme: base.textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Color(0xF0121A2B),
+        contentTextStyle: TextStyle(color: Colors.white, fontFamily: 'Outfit', fontSize: 15),
+      ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(color: const Color(0xEE121A2B), borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(color: Colors.white, fontFamily: 'Outfit'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Clima Brasil',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-        fontFamily: 'Inter', // Utilizando uma fonte limpa e moderna
-      ),
-      home: const HomeScreen(),
-    );
+    return MaterialApp(title: 'Clima Brasil', debugShowCheckedModeBanner: false, theme: tema, home: home);
   }
 }

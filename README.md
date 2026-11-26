@@ -1,54 +1,80 @@
-# 🌦️ Aplicativo Meteorológico
+<h1 align="center">Clima Brasil</h1>
 
-Um aplicativo completo de previsão do tempo desenvolvido em **Flutter**, focado em fornecer dados meteorológicos em tempo real, com uma interface bonita e responsiva. O projeto inclui integração de APIs, gerenciamento de estado e um backend para histórico de buscas.
+<h3 align="center">
+  <a href="https://biabruna19.github.io/App-Meteorologico/">Abrir o app → biabruna19.github.io/App-Meteorologico</a>
+</h3>
 
-🌍 **Acesse o App na Web:** [App Meteorológico](https://biabruna19.github.io/App-Metereologico/)
+<p align="center">
+  <img src="docs/computador.webp" width="72%" alt="Clima Brasil no computador">
+  <img src="docs/celular.webp" width="22%" alt="Clima Brasil no celular">
+</p>
 
----
+## Sobre
 
-## ✨ Funcionalidades
+App de previsão do tempo feito em Flutter. Você busca uma cidade (ou usa a sua localização) e vê como está o tempo agora, as próximas 24 horas e os próximos 7 dias. O fundo muda de cor conforme o céu e o horário da cidade: azul em dia de sol, cinza quando está nublado e escuro à noite.
 
-- **Previsão em Tempo Real:** Consulta de dados climáticos e temperatura atual de cidades (com foco no Brasil).
-- **Gráficos de Temperatura:** Visualização interativa da variação de temperatura ao longo do tempo.
-- **Histórico de Buscas:** O aplicativo salva as cidades pesquisadas anteriormente utilizando um banco de dados na nuvem.
-- **Design Responsivo:** A interface se adapta perfeitamente a diferentes tamanhos de tela (Mobile e Web).
-- **Deploy Automático:** O aplicativo web é atualizado automaticamente via GitHub Actions sempre que há uma nova alteração no código.
+## O que dá para fazer
 
-## 🛠️ Tecnologias Utilizadas
+- **Buscar qualquer cidade**, com sugestões aparecendo enquanto você digita.
+- **Usar a localização** do celular ou do navegador.
+- **Ver o tempo agora**: temperatura, sensação térmica, máxima e mínima do dia e a descrição do céu.
+- **Detalhes**: umidade, vento com direção, chance de chuva, índice UV, nascer e pôr do sol.
+- **Próximas 24 horas** num gráfico (dá para tocar para ver cada hora) e numa faixa com ícone e chance de chuva.
+- **Próximos 7 dias**, com uma barra que mostra a faixa de temperatura de cada dia.
+- **Favoritos e buscas recentes** salvos no aparelho. O app abre na última cidade que você viu.
+- **°C ou °F** e **compartilhar** a previsão.
+- O horário mostrado é sempre o da cidade, então funciona para cidades de outros fusos também.
 
-- **[Flutter](https://flutter.dev/):** Framework principal para desenvolvimento da interface (Mobile e Web).
-- **[Dart](https://dart.dev/):** Linguagem de programação base do Flutter.
-- **[Provider](https://pub.dev/packages/provider):** Gerenciamento de estado da aplicação.
-- **[Open-Meteo API](https://open-meteo.com/):** Fornecimento de dados meteorológicos precisos e gratuitos.
-- **[Supabase](https://supabase.com/):** Backend-as-a-Service (BaaS) utilizado para armazenar o histórico de buscas dos usuários.
-- **GitHub Pages & Actions:** Hospedagem gratuita da versão web e pipeline de CI/CD para deploy automático.
+<p align="center">
+  <img src="docs/noite.webp" width="80%" alt="Clima Brasil à noite">
+</p>
 
-## 🚀 Como executar o projeto localmente
+## Tecnologias
 
-Caso queira baixar e rodar o projeto na sua máquina, siga os passos abaixo.
+- **Flutter** e **Dart**, com o pacote **material_ui**
+- **Provider** para o estado do app
+- **Open-Meteo** para a previsão e a busca de cidades (gratuita e sem chave)
+- **fl_chart** no gráfico das próximas horas
+- **shared_preferences** para guardar favoritos, recentes e preferências
+- **geolocator** para a localização
+- **GitHub Actions** roda a análise e os testes e publica a versão web no GitHub Pages a cada mudança
 
-### Pré-requisitos
-- Ter o [Flutter SDK](https://docs.flutter.dev/get-started/install) instalado.
-- Ter uma IDE configurada (VS Code, Android Studio, etc).
+Na primeira versão o histórico de buscas ia para o Supabase, mas ele nunca aparecia na tela e parava de funcionar quando o projeto gratuito era pausado. Agora tudo fica no próprio aparelho, sem precisar de servidor.
 
-### Passos
+## Rodando no computador
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/biabruna19/App-Metereologico.git
-   ```
-2. Entre na pasta do projeto:
-   ```bash
-   cd App-Metereologico
-   ```
-3. Instale as dependências:
-   ```bash
-   flutter pub get
-   ```
-4. Execute o aplicativo:
-   ```bash
-   flutter run
-   ```
+Precisa do [Flutter](https://docs.flutter.dev/get-started/install) 3.47 ou mais novo.
 
----
-*Desenvolvido por [Beatriz Oliveira](https://github.com/biabruna19)*.
+```bash
+git clone https://github.com/biabruna19/App-Meteorologico.git
+cd App-Meteorologico
+flutter pub get
+flutter run -d chrome
+```
+
+Para rodar os testes:
+
+```bash
+flutter test
+```
+
+## Organização
+
+```
+lib/
+  main.dart             tema e início do app
+  models/               cidade e previsão (leitura do JSON da Open-Meteo)
+  services/             API, armazenamento no aparelho e localização
+  providers/            estado do app (busca, favoritos, unidade…)
+  screens/              tela principal
+  widgets/              cartões: tempo atual, detalhes, 24 horas, 7 dias
+  util/                 descrições e ícones do tempo, formatação
+test/                   testes dos modelos, do estado e da tela
+```
+
+## Desenvolvido por
+
+**Beatriz Oliveira**<br>
+[GitHub](https://github.com/biabruna19) · [LinkedIn](https://www.linkedin.com/in/beatriz-oliveira-759867294/) · [E-mail](mailto:biabruna.1901@gmail.com)
+
+Dados meteorológicos: [Open-Meteo](https://open-meteo.com/) · Fonte: Outfit (SIL Open Font License)
