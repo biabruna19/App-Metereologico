@@ -23,6 +23,7 @@ class ClimaProvider extends ChangeNotifier {
   Cidade? cidade;
   Previsao? previsao;
   bool carregando = false;
+  bool localizando = false;
   String? erro;
   List<Cidade> favoritos = [];
   List<Cidade> recentes = [];
@@ -99,17 +100,29 @@ class ClimaProvider extends ChangeNotifier {
   Future<void> usarLocalizacao() async {
     final pedido = ++_pedido;
     carregando = true;
+    localizando = true;
     erro = null;
     notifyListeners();
     try {
-      final p = await _localizador.posicao();
+      // Limite de segurança: aconteça o que acontecer, a espera termina.
+      final p = await _localizador.posicao().timeout(const Duration(seconds: 30));
+      localizando = false;
       final lugar = await _api.cidadeDaPosicao(p.latitude, p.longitude);
       if (pedido != _pedido) return;
       await abrir(lugar);
     } on ClimaException catch (e) {
       if (pedido == _pedido) _falhar(e.mensagem);
     } catch (_) {
-      if (pedido == _pedido) _falhar('Não conseguimos pegar sua localização. Você pode buscar a cidade pelo nome.');
+      if (pedido == _pedido) {
+        _falhar(
+          'Não conseguimos descobrir sua localização. Confira se ela está ligada e liberada para este site, ou busque a cidade pelo nome.',
+        );
+      }
+    } finally {
+      if (localizando) {
+        localizando = false;
+        notifyListeners();
+      }
     }
   }
 
