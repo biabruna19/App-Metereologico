@@ -1,11 +1,11 @@
 {
-    "name": "app_metereologico",
-    "short_name": "app_metereologico",
+    "name": "Clima Brasil",
+    "short_name": "Clima",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1E6FD0",
+    "theme_color": "#1E6FD0",
+    "description": "Previsão do tempo de qualquer cidade, com os próximos 7 dias.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
@@ -31,5 +31,6 @@
             "type": "image/png",
             "purpose": "maskable"
         }
-    ]
+    ],
+    "lang": "pt-BR"
 }

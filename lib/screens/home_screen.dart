@@ -1,211 +1,130 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../providers/weather_provider.dart';
-import '../widgets/weather_chart.dart';
+
+import '../providers/clima_provider.dart';
+import '../util/condicao.dart';
+import '../util/formatos.dart';
+import '../widgets/barra_busca.dart';
+import '../widgets/cartao_atual.dart';
+import '../widgets/detalhes.dart';
+import '../widgets/painel.dart';
+import '../widgets/proximas_horas.dart';
+import '../widgets/proximos_dias.dart';
+import '../widgets/rodape.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.iniciar = true});
+
+  /// Nos testes a carga inicial é feita à mão.
+  final bool iniciar;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _searchController = TextEditingController();
+  late final ClimaProvider _prov;
 
   @override
   void initState() {
     super.initState();
-    // Busca os dados iniciais assim que a tela for montada
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WeatherProvider>().loadInitialData();
-    });
+    _prov = context.read<ClimaProvider>();
+    _prov.addListener(_avisarErro);
+    if (widget.iniciar) WidgetsBinding.instance.addPostFrameCallback((_) => _prov.iniciar());
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _prov.removeListener(_avisarErro);
     super.dispose();
   }
 
-  void _searchCity() {
-    final city = _searchController.text.trim();
-    if (city.isNotEmpty) {
-      context.read<WeatherProvider>().fetchWeatherForCity(city);
-      FocusScope.of(context).unfocus(); // Esconde o teclado
+  /// Se já há uma previsão na tela, o erro aparece num aviso embaixo
+  /// em vez de apagar tudo.
+  void _avisarErro() {
+    final erro = _prov.erro;
+    if (erro == null || _prov.previsao == null || _prov.carregando) return;
+    _prov.limparErro();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(erro), behavior: SnackBarBehavior.floating));
+  }
+
+  Future<void> _compartilhar() async {
+    final c = _prov.cidade;
+    final p = _prov.previsao;
+    if (c == null || p == null) return;
+    final f = _prov.fahrenheit;
+    final cond = Condicao.doCodigo(p.atual.codigo).descricao.toLowerCase();
+    final hoje = p.hoje;
+    final link = kIsWeb ? '\n${Uri.base.origin}${Uri.base.path}' : '';
+    final texto =
+        'Agora em ${c.nome}: ${temperatura(p.atual.temperatura, f, unidade: true)}, $cond.'
+        '${hoje == null ? '' : ' Máxima de ${temperatura(hoje.maxima, f)} e mínima de ${temperatura(hoje.minima, f)}.'}'
+        '\nPrevisão do Clima Brasil$link';
+    final mensageiro = ScaffoldMessenger.of(context);
+    try {
+      final r = await SharePlus.instance.share(ShareParams(text: texto, subject: 'Clima em ${c.nome}'));
+      if (r.status != ShareResultStatus.unavailable) return;
+    } catch (_) {
+      // navegador sem a janela de compartilhar: copia o texto
     }
+    await Clipboard.setData(ClipboardData(text: texto));
+    mensageiro
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Previsão copiada. É só colar onde quiser.'), behavior: SnackBarBehavior.floating));
   }
 
   @override
   Widget build(BuildContext context) {
+    final prov = context.watch<ClimaProvider>();
+    final previsao = prov.previsao;
+    final cond = Condicao.doCodigo(previsao?.atual.codigo ?? 2);
+
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Clima Brasil', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        actions: [
-          Consumer<WeatherProvider>(
-            builder: (context, provider, child) {
-              if (provider.currentWeather != null && !provider.isLoading) {
-                return IconButton(
-                  icon: const Icon(Icons.share, color: Colors.white),
-                  onPressed: () {
-                    final weather = provider.currentWeather!;
-                    Share.share(
-                      'Confira o clima em ${weather.cityName}! Agora faz ${weather.temperature.toStringAsFixed(1)}°C. - Enviado via App Clima Brasil',
-                    );
-                  },
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F2027), // Escuro profundo
-              Color(0xFF203A43), // Azul petróleo
-              Color(0xFF2C5364), // Azul acinzentado
-            ],
+            colors: cond.fundo(dia: previsao?.atual.dia ?? true),
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Barra de Busca
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar cidade...',
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.2),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: _searchCity,
+          child: RefreshIndicator(
+            onRefresh: prov.atualizar,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1180),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Topo(aoCompartilhar: previsao == null ? null : _compartilhar),
+                        SizedBox(
+                          height: 3,
+                          child: prov.carregando && previsao != null
+                              ? const LinearProgressIndicator(color: Colors.white, backgroundColor: Colors.transparent)
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                        const BarraBusca(),
+                        const SizedBox(height: 20),
+                        _conteudo(prov),
+                        const Rodape(),
+                      ],
                     ),
                   ),
-                  style: const TextStyle(color: Colors.white),
-                  onSubmitted: (_) => _searchCity(),
                 ),
-                const SizedBox(height: 40),
-
-                // Exibição do Clima
-                Expanded(
-                  child: Consumer<WeatherProvider>(
-                    builder: (context, provider, child) {
-                      if (provider.isLoading) {
-                        return const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        );
-                      }
-
-                      if (provider.errorMessage != null) {
-                        return Center(
-                          child: Text(
-                            provider.errorMessage!,
-                            style: const TextStyle(color: Colors.redAccent, fontSize: 16),
-                            textAlign: TextAlign.center,
-                          ),
-                        );
-                      }
-
-                      final weather = provider.currentWeather;
-                      if (weather == null) {
-                        return const Center(
-                          child: Text(
-                            'Busque uma cidade para ver o clima.',
-                            style: TextStyle(color: Colors.white70, fontSize: 18),
-                          ),
-                        );
-                      }
-
-                      return ListView(
-                        children: [
-                          Icon(
-                            _getIconData(weather.weatherCode),
-                            size: 100,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            weather.cityName,
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '${weather.temperature.toStringAsFixed(1)}°C',
-                            style: const TextStyle(
-                              fontSize: 64,
-                              fontWeight: FontWeight.w300,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            weather.weatherDescription,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                          // Card de detalhes com Glassmorphism
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.2),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    _buildDetailItem(Icons.air, '${weather.windSpeed} km/h', 'Vento'),
-                                    _buildDetailItem(Icons.water_drop_outlined, 'Variável', 'Umidade'),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Gráfico de Previsão
-                          WeatherChart(weatherData: weather),
-                          const SizedBox(height: 20),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -213,23 +132,110 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDetailItem(IconData icon, String value, String label) {
-    return Column(
+  Widget _conteudo(ClimaProvider prov) {
+    if (prov.previsao == null) {
+      if (prov.erro != null) return _PainelErro(mensagem: prov.erro!, aoTentar: prov.atualizar);
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 120),
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+    const espaco = SizedBox(height: 16);
+    return LayoutBuilder(
+      builder: (context, c) {
+        if (c.maxWidth >= 900) {
+          return const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: Column(children: [CartaoAtual(), espaco, Detalhes()])),
+              SizedBox(width: 16),
+              Expanded(flex: 6, child: Column(children: [ProximasHoras(), espaco, ProximosDias()])),
+            ],
+          );
+        }
+        return const Column(children: [CartaoAtual(), espaco, ProximasHoras(), espaco, Detalhes(), espaco, ProximosDias()]);
+      },
+    );
+  }
+}
+
+class _Topo extends StatelessWidget {
+  const _Topo({this.aoCompartilhar});
+  final VoidCallback? aoCompartilhar;
+
+  @override
+  Widget build(BuildContext context) {
+    final prov = context.watch<ClimaProvider>();
+    return Row(
       children: [
-        Icon(icon, color: Colors.white70, size: 30),
-        const SizedBox(height: 8),
-        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(color: Colors.white70)),
+        const Icon(Icons.wb_sunny_rounded, color: Color(0xFFFFD54F), size: 26),
+        const SizedBox(width: 8),
+        // em telas muito estreitas fica só o sol, para não cortar o nome
+        Expanded(
+          child: MediaQuery.sizeOf(context).width < 360
+              ? const SizedBox.shrink()
+              : const Text(
+                  'Clima Brasil',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  overflow: TextOverflow.ellipsis,
+                ),
+        ),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(value: false, label: Text('°C'), tooltip: 'Celsius'),
+            ButtonSegment(value: true, label: Text('°F'), tooltip: 'Fahrenheit'),
+          ],
+          selected: {prov.fahrenheit},
+          onSelectionChanged: (s) {
+            if (s.first != prov.fahrenheit) prov.alternarUnidade();
+          },
+          showSelectedIcon: false,
+          style: SegmentedButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            foregroundColor: Colors.white,
+            selectedForegroundColor: const Color(0xFF0B2545),
+            selectedBackgroundColor: Colors.white,
+            side: const BorderSide(color: Colors.white54),
+            textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Compartilhar previsão',
+          onPressed: aoCompartilhar,
+          icon: const Icon(Icons.ios_share_rounded),
+          color: Colors.white,
+        ),
       ],
     );
   }
+}
 
-  IconData _getIconData(int code) {
-    if (code == 0) return Icons.wb_sunny;
-    if (code <= 3) return Icons.cloud;
-    if (code <= 65) return Icons.water_drop;
-    if (code <= 75) return Icons.ac_unit;
-    if (code == 95) return Icons.thunderstorm;
-    return Icons.cloud;
+class _PainelErro extends StatelessWidget {
+  const _PainelErro({required this.mensagem, required this.aoTentar});
+  final String mensagem;
+  final VoidCallback aoTentar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Painel(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          children: [
+            const Icon(Icons.cloud_off_rounded, size: 52, color: Colors.white70),
+            const SizedBox(height: 14),
+            Text(mensagem, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: aoTentar,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Tentar de novo'),
+              style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF0B2545)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
